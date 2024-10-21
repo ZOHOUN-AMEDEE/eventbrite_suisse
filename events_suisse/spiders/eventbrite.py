@@ -1,9 +1,11 @@
 import scrapy
-import time
+
 
 class EventSpider(scrapy.Spider):
     name = 'eventbrite'
     start_urls = ['https://www.eventbrite.fr/d/switzerland/suisse/?page=1']
+
+   
     MAX_PAGES = 5
 
     def parse(self, response):
@@ -13,22 +15,19 @@ class EventSpider(scrapy.Spider):
         for event in events:
             event_link = event.css('a.event-card-link::attr(href)').get()
             category = event.css('a.event-card-link::attr(data-event-category)').get()
-
             if event_link:
                 
                 yield response.follow(event_link, self.parse_event, meta={'category': category})
 
-        
-        page = int(response.url.split('=')[-1])
-        if page < self.MAX_PAGES:
-            next_page = f'https://www.eventbrite.fr/d/switzerland/suisse/?page={page + 1}'
+    
+        current_page = int(response.url.split('=')[-1])
+        if current_page < self.MAX_PAGES:
+            next_page = f'https://www.eventbrite.fr/d/switzerland/suisse/?page={current_page + 1}'
             yield response.follow(next_page, self.parse)
 
         
-        time.sleep(1)
 
     def parse_event(self, response):
-        
         title = response.css('h1.event-title::text').get(default='').strip()
         date = response.css('span.date-info__full-datetime::text').get(default='').strip()
         description = response.css('div.eds-l-mar-vert-6.eds-l-sm-mar-vert-4.eds-text-bm.structured-content-rich-text p::text').getall()
@@ -43,12 +42,11 @@ class EventSpider(scrapy.Spider):
             'title': title,
             'date': date,
             'description': description,
-            'price': price,  
+            'price': price,
             'location': location,
-            'image_url': image_url,
+           'image_url': image_url,
             'event_link': response.url,
-            'category': category,  }
-        
-        time.sleep(1)
+            'category': category,  
+        }
 
-#scrapy crawl eventbrite -o event.json pour l'enregistrement sous json
+       
